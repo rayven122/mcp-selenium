@@ -1,11 +1,15 @@
 {
-  "name": "@angiejones/mcp-selenium",
+  "name": "@rayven122/mcp-selenium",
   "version": "0.2.3",
-  "description": "Selenium WebDriver MCP Server",
+  "description": "Selenium WebDriver MCP Server (rayven122 fork — adds Edge IE mode)",
   "type": "module",
   "main": "src/lib/server.js",
   "bin": {
     "mcp-selenium": "./src/lib/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rayven122/mcp-selenium.git"
   },
   "scripts": {
     "test": "node --test"
