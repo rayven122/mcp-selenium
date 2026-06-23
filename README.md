@@ -1,12 +1,20 @@
 # MCP Selenium Server
 
-A Model Context Protocol (MCP) server for Selenium WebDriver — browser automation for AI agents.
+A Model Context Protocol (MCP) server that lets AI agents automate real browsers
+through Selenium WebDriver.
 
-[![Watch the video](https://img.youtube.com/vi/mRV0N8hcgYA/sddefault.jpg)](https://youtu.be/mRV0N8hcgYA)
+Use it when an agent needs to open a browser, navigate pages, click elements,
+fill forms, upload files, handle alerts, manage cookies, capture diagnostics, or
+inspect page structure without writing a separate Selenium script.
 
-<a href="https://glama.ai/mcp/servers/@angiejones/mcp-selenium">
-  <img width="380" height="200" src="https://glama.ai/mcp/servers/@angiejones/mcp-selenium/badge" alt="Selenium MCP server" />
-</a>
+## What It Provides
+
+- Browser automation for Chrome, Firefox, Edge, Safari, and Edge in IE mode.
+- 18 MCP tools for navigation, interactions, screenshots, cookies, windows,
+  frames, alerts, script execution, and diagnostics.
+- 2 MCP resources for browser status and compact accessibility snapshots.
+- Passive WebDriver BiDi capture for console logs, JavaScript errors, and
+  network activity when the browser and driver support it.
 
 ## Setup
 
@@ -14,6 +22,7 @@ A Model Context Protocol (MCP) server for Selenium WebDriver — browser automat
 <summary><strong>Goose (Desktop)</strong></summary>
 
 Paste into your browser address bar:
+
 ```
 goose://extension?cmd=npx&arg=-y&arg=github%3Arayven122%2Fmcp-selenium&id=selenium-mcp&name=Selenium%20MCP&description=automates%20browser%20interactions
 ```
@@ -50,257 +59,184 @@ claude mcp add selenium -- npx -y github:rayven122/mcp-selenium
 ```
 </details>
 
+## Requirements
+
+- Node.js and npm.
+- At least one supported browser installed.
+- The matching browser driver available to Selenium if your environment does
+  not provide one automatically.
+
+For local tests, Chrome and `chromedriver` must be on your `PATH`.
+
 ## Example Usage
 
-Tell the AI agent of your choice:
+After adding the server to your MCP client, ask your AI agent something like:
 
 > Open Chrome, go to github.com/angiejones, and take a screenshot.
 
-The agent will call Selenium's APIs to `start_browser`, `navigate`, and `take_screenshot`. No manual scripting or explicit directions needed.
+The agent can then call `start_browser`, `navigate`, and `take_screenshot`
+through MCP. For most page inspection tasks, agents should prefer the
+`accessibility://current` resource because it is smaller and easier to reason
+about than full HTML or screenshots.
 
 ## Supported Browsers
 
-Chrome, Firefox, Edge, Safari, and **Edge in IE mode** (`edge-ie`).
+| Browser | `start_browser` value | Headless support | Notes |
+|---------|------------------------|------------------|-------|
+| Chrome | `chrome` | Yes | Uses `--headless=new` when `options.headless` is true. |
+| Firefox | `firefox` | Yes | Uses Firefox headless mode when requested. |
+| Edge | `edge` | Yes | Uses `--headless=new` when `options.headless` is true. |
+| Safari | `safari` | No | macOS only. Requires Safari remote automation. |
+| Edge in IE mode | `edge-ie` | No | Windows only. Requires IEDriverServer and IE mode setup. |
 
-> **Safari note:** Requires macOS. Run `sudo safaridriver --enable` once and enable
-> "Allow Remote Automation" in Safari → Settings → Developer. No headless mode.
+### Safari Setup
 
-> **Edge IE mode note (`edge-ie`):** **Windows only.** Drives Microsoft Edge with the
-> legacy Internet Explorer engine for old intranet/legacy sites. Requirements:
-> 1. **IEDriverServer** (32-bit recommended) from the
->    [Selenium downloads](https://www.selenium.dev/downloads/) on your `PATH`.
-> 2. Microsoft Edge installed.
-> 3. IE mode enabled in Edge (policy/registry) and the target sites configured to
->    "Reload in Internet Explorer mode" / added to the Enterprise Mode site list.
->
-> No headless mode. Optional `options`: `edgePath` (path to `msedge.exe`),
-> `ieIgnoreZoomSetting` (ignore protected-mode zone/zoom mismatch).
-> Example: `{ "browser": "edge-ie", "options": { "ieIgnoreZoomSetting": true } }`
+Run this once on macOS:
 
----
+```bash
+sudo safaridriver --enable
+```
 
-<details>
-<summary><strong>Tools</strong></summary>
+Then enable "Allow Remote Automation" in Safari under Settings > Developer.
 
-### start_browser
-Launches a browser session.
+### Edge IE Mode Setup
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| browser | string | Yes | `chrome`, `firefox`, `edge`, `safari`, or `edge-ie` (Edge IE mode, Windows only) |
-| options | object | No | `{ headless: boolean, arguments: string[], edgePath?: string, ieIgnoreZoomSetting?: boolean }` |
+Edge IE mode is for legacy sites that must run through the Internet Explorer
+engine inside Microsoft Edge. It requires:
 
-### navigate
-Navigates to a URL.
+- Windows.
+- Microsoft Edge.
+- IEDriverServer, preferably 32-bit, from the
+  [Selenium downloads](https://www.selenium.dev/downloads/) on your `PATH`.
+- IE mode enabled in Edge by policy or registry, with target sites configured
+  for Internet Explorer mode.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| url | string | Yes | URL to navigate to |
+Example:
 
-### interact
-Performs a mouse action on an element.
+```json
+{
+  "browser": "edge-ie",
+  "options": {
+    "ieIgnoreZoomSetting": true
+  }
+}
+```
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| action | string | Yes | `click`, `doubleclick`, `rightclick`, or `hover` |
-| by | string | Yes | Locator strategy: `id`, `css`, `xpath`, `name`, `tag`, `class` |
-| value | string | Yes | Value for the locator strategy |
-| timeout | number | No | Max wait in ms (default: 10000) |
+Optional Edge IE mode options include `edgePath` and `ieIgnoreZoomSetting`.
 
-### send_keys
-Types text into an element. Clears the field first.
+## Tools
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| by | string | Yes | Locator strategy |
-| value | string | Yes | Locator value |
-| text | string | Yes | Text to enter |
-| timeout | number | No | Max wait in ms (default: 10000) |
+Locator-based tools use the same locator strategies:
 
-### get_element_text
-Gets the text content of an element.
+| Strategy | Description |
+|----------|-------------|
+| `id` | Find by element ID. |
+| `css` | Find by CSS selector. |
+| `xpath` | Find by XPath expression. |
+| `name` | Find by `name` attribute. |
+| `tag` | Find by tag name. |
+| `class` | Find by class name. |
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| by | string | Yes | Locator strategy |
-| value | string | Yes | Locator value |
-| timeout | number | No | Max wait in ms (default: 10000) |
+Most locator-based tools accept an optional `timeout` in milliseconds. The
+default is `10000` unless noted otherwise.
 
-### get_element_attribute
-Gets an attribute value from an element.
+| Tool | Purpose | Key parameters |
+|------|---------|----------------|
+| `start_browser` | Launch a browser session. | `browser`, optional `options` |
+| `navigate` | Navigate to a URL. | `url` |
+| `interact` | Click, double-click, right-click, or hover over an element. | `action`, `by`, `value`, optional `timeout` |
+| `send_keys` | Clear an element, then type text into it. | `by`, `value`, `text`, optional `timeout` |
+| `get_element_text` | Read visible text from an element. | `by`, `value`, optional `timeout` |
+| `get_element_attribute` | Read an element attribute. | `by`, `value`, `attribute`, optional `timeout` |
+| `press_key` | Press a keyboard key. | `key` |
+| `upload_file` | Set a file input to an absolute file path. | `by`, `value`, `filePath`, optional `timeout` |
+| `take_screenshot` | Capture the current page. | optional `outputPath` |
+| `close_session` | Close the current browser session. | none |
+| `execute_script` | Run JavaScript in the browser. | `script`, optional `args` |
+| `window` | List, switch, switch to latest, or close windows and tabs. | `action`, optional `handle` |
+| `frame` | Switch to a frame or back to the default page. | `action`, optional `by`, `value`, `index`, `timeout` |
+| `alert` | Accept, dismiss, read, or type into browser dialogs. | `action`, optional `text`, `timeout` |
+| `add_cookie` | Add a cookie for the current page domain. | `name`, `value`, optional cookie fields |
+| `get_cookies` | Return all cookies or one cookie by name. | optional `name` |
+| `delete_cookie` | Delete all cookies or one cookie by name. | optional `name` |
+| `diagnostics` | Read BiDi console logs, JS errors, or network activity. | `type`, optional `clear` |
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| by | string | Yes | Locator strategy |
-| value | string | Yes | Locator value |
-| attribute | string | Yes | Attribute name (e.g., `href`, `value`, `class`) |
-| timeout | number | No | Max wait in ms (default: 10000) |
+### Tool Details
 
-### press_key
-Presses a keyboard key.
+#### `start_browser`
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| key | string | Yes | Key to press (e.g., `Enter`, `Tab`, `a`) |
+`browser` must be one of `chrome`, `firefox`, `edge`, `safari`, or `edge-ie`.
 
-### upload_file
-Uploads a file via a file input element.
+`options` can include:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| by | string | Yes | Locator strategy |
-| value | string | Yes | Locator value |
-| filePath | string | Yes | Absolute path to the file |
-| timeout | number | No | Max wait in ms (default: 10000) |
+```json
+{
+  "headless": true,
+  "arguments": ["--window-size=1280,720"],
+  "edgePath": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+  "ieIgnoreZoomSetting": true
+}
+```
 
-### take_screenshot
-Captures a screenshot of the current page.
+`edgePath` and `ieIgnoreZoomSetting` apply only to `edge-ie`.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| outputPath | string | No | Save path. If omitted, returns base64 image data. |
+#### `interact`
 
-### close_session
-Closes the current browser session. No parameters.
+`action` must be one of `click`, `doubleclick`, `rightclick`, or `hover`.
 
-### execute_script
-Executes JavaScript in the browser. Use for advanced interactions not covered by other tools (e.g., drag and drop, scrolling, reading computed styles, DOM manipulation).
+#### `window`
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| script | string | Yes | JavaScript code to execute |
-| args | array | No | Arguments accessible via `arguments[0]`, etc. |
+`action` must be one of `list`, `switch`, `switch_latest`, or `close`.
+`handle` is required for `switch`.
 
-### window
-Manages browser windows and tabs.
+#### `frame`
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| action | string | Yes | `list`, `switch`, `switch_latest`, or `close` |
-| handle | string | No | Window handle (required for `switch`) |
+`action` must be `switch` or `default`. For `switch`, provide either a locator
+(`by` and `value`) or an `index`.
 
-### frame
-Switches focus to a frame or back to the main page.
+#### `alert`
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| action | string | Yes | `switch` or `default` |
-| by | string | No | Locator strategy (for `switch`) |
-| value | string | No | Locator value (for `switch`) |
-| index | number | No | Frame index, 0-based (for `switch`) |
-| timeout | number | No | Max wait in ms (default: 10000) |
+`action` must be one of `accept`, `dismiss`, `get_text`, or `send_text`.
+`text` is required for `send_text`. The default timeout is `5000` ms.
 
-### alert
-Handles browser alert, confirm, or prompt dialogs.
+#### `diagnostics`
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| action | string | Yes | `accept`, `dismiss`, `get_text`, or `send_text` |
-| text | string | No | Text to send (required for `send_text`) |
-| timeout | number | No | Max wait in ms (default: 5000) |
+`type` must be one of `console`, `errors`, or `network`. Set `clear` to `true`
+to empty that diagnostics buffer after reading it.
 
-### add_cookie
-Adds a cookie. Browser must be on a page from the cookie's domain.
+## Resources
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| name | string | Yes | Cookie name |
-| value | string | Yes | Cookie value |
-| domain | string | No | Cookie domain |
-| path | string | No | Cookie path |
-| secure | boolean | No | Secure flag |
-| httpOnly | boolean | No | HTTP-only flag |
-| expiry | number | No | Unix timestamp |
+MCP resources provide read-only data that clients can access without calling a
+tool.
 
-### get_cookies
-Gets cookies. Returns all or a specific one by name.
+| Resource | MIME type | Requires browser | Description |
+|----------|-----------|------------------|-------------|
+| `browser-status://current` | `text/plain` | No | Current active session ID, or `no active session`. |
+| `accessibility://current` | `application/json` | Yes | Compact accessibility tree of interactive elements and text content. |
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| name | string | No | Cookie name. Omit for all cookies. |
-
-### delete_cookie
-Deletes cookies. Deletes all or a specific one by name.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| name | string | No | Cookie name. Omit to delete all. |
-
-### diagnostics
-Gets browser diagnostics captured via WebDriver BiDi (auto-enabled when supported).
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| type | string | Yes | `console`, `errors`, or `network` |
-| clear | boolean | No | Clear buffer after returning (default: false) |
-
-</details>
-
-<details>
-<summary><strong>Resources</strong></summary>
-
-MCP resources provide read-only data that clients can access without calling a tool.
-
-### browser-status://current
-Returns the current browser session status (active session ID or "no active session").
-
-| Property | Value |
-|----------|-------|
-| MIME type | `text/plain` |
-| Requires browser | No |
-
-### accessibility://current
-Returns an accessibility tree snapshot of the current page — a compact, structured JSON representation of interactive elements and text content. Much smaller than full HTML. Useful for understanding page layout and finding elements to interact with.
-
-| Property | Value |
-|----------|-------|
-| MIME type | `application/json` |
-| Requires browser | Yes |
-
-</details>
-
----
-
-<details>
-<summary><strong>Development</strong></summary>
-
-### Setup
+## Development
 
 ```bash
 git clone https://github.com/rayven122/mcp-selenium.git
 cd mcp-selenium
 npm install
-```
-
-### Run Tests
-
-```bash
 npm test
 ```
 
-Requires Chrome + chromedriver on PATH. Tests run headless.
+Tests use Node's built-in test runner and talk to the real MCP server over
+stdio. They require Chrome and `chromedriver` on your `PATH`.
 
-### Run directly from GitHub (no install)
-
-This fork is distributed via GitHub (not published to npm). Run it directly:
-
-```bash
-npx -y github:rayven122/mcp-selenium
-```
+This fork is distributed via GitHub (not published to npm). The Setup section
+above runs it directly with `npx -y github:rayven122/mcp-selenium`.
 
 ### Run from a local clone
 
-For a pinned local copy (recommended when running on a fixed Windows host for Edge IE mode):
+For a pinned local copy (recommended when running on a fixed Windows host for
+Edge IE mode), point your MCP client at the server entry directly:
 
 ```bash
-git clone https://github.com/rayven122/mcp-selenium.git
-cd mcp-selenium
-npm install
-# point your MCP client at:
 node /absolute/path/to/mcp-selenium/src/lib/server.js
 ```
-
-</details>
 
 ## License
 
