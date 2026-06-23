@@ -18,30 +18,34 @@ inspect page structure without writing a separate Selenium script.
 
 ## Setup
 
-This package runs with `npx`, so most MCP clients do not need a global install.
-Use the configuration for your client below.
+<details open>
+<summary><strong>Goose (Desktop)</strong></summary>
 
-### Goose Desktop
+Paste into your browser address bar:
 
-Paste this URL into your browser address bar:
-
-```text
+```
 goose://extension?cmd=npx&arg=-y&arg=%40angiejones%2Fmcp-selenium%40latest&id=selenium-mcp&name=Selenium%20MCP&description=automates%20browser%20interactions
 ```
+</details>
 
-### Goose CLI
+<details>
+<summary><strong>Goose (CLI)</strong></summary>
 
 ```bash
 goose session --with-extension "npx -y @angiejones/mcp-selenium@latest"
 ```
+</details>
 
-### Claude Code
+<details>
+<summary><strong>Claude Code</strong></summary>
 
 ```bash
 claude mcp add selenium -- npx -y @angiejones/mcp-selenium@latest
 ```
+</details>
 
-### Cursor, Windsurf, and Other MCP Clients
+<details>
+<summary><strong>Cursor / Windsurf / other MCP clients</strong></summary>
 
 ```json
 {
@@ -53,19 +57,7 @@ claude mcp add selenium -- npx -y @angiejones/mcp-selenium@latest
   }
 }
 ```
-
-### Smithery
-
-```bash
-npx -y @smithery/cli install @angiejones/mcp-selenium --client claude
-```
-
-### Global Install
-
-```bash
-npm install -g @angiejones/mcp-selenium
-mcp-selenium
-```
+</details>
 
 ## Requirements
 
