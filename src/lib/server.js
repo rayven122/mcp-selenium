@@ -11,6 +11,7 @@ import { Options as ChromeOptions } from 'selenium-webdriver/chrome.js';
 import { Options as FirefoxOptions } from 'selenium-webdriver/firefox.js';
 import { Options as EdgeOptions } from 'selenium-webdriver/edge.js';
 import { Options as SafariOptions } from 'selenium-webdriver/safari.js';
+import { Options as IeOptions } from 'selenium-webdriver/ie.js';
 
 // Create an MCP server
 import { createRequire } from 'module';
@@ -121,7 +122,9 @@ const accessibilitySnapshotScript = readFileSync(
 // Common schemas
 const browserOptionsSchema = z.object({
     headless: z.boolean().optional().describe("Run browser in headless mode"),
-    arguments: z.array(z.string()).optional().describe("Additional browser arguments")
+    arguments: z.array(z.string()).optional().describe("Additional browser arguments"),
+    edgePath: z.string().optional().describe("Path to msedge.exe (edge-ie only; defaults to the standard install path). Windows only."),
+    ieIgnoreZoomSetting: z.boolean().optional().describe("Ignore IE protected-mode zone mismatch (edge-ie only)")
 }).optional();
 
 const locatorSchema = {
@@ -136,7 +139,7 @@ server.registerTool(
     {
         description: "launches browser",
         inputSchema: {
-            browser: z.enum(["chrome", "firefox", "edge", "safari"]).describe("Browser to launch (chrome, firefox, edge, or safari)"),
+            browser: z.enum(["chrome", "firefox", "edge", "safari", "edge-ie"]).describe("Browser to launch. Use 'edge-ie' to drive Microsoft Edge in Internet Explorer (IE) mode — Windows only, requires IEDriverServer on PATH."),
             options: browserOptionsSchema
         }
     },
@@ -146,8 +149,9 @@ server.registerTool(
             let driver;
             let warnings = [];
 
-            // Enable BiDi websocket if the modules are available
-            if (LogInspector && Network) {
+            // Enable BiDi websocket if the modules are available.
+            // IE mode does not support WebDriver BiDi, so skip it for edge-ie.
+            if (LogInspector && Network && browser !== 'edge-ie') {
                 // 'ignore' prevents BiDi from auto-dismissing alert/confirm/prompt dialogs,
                 // allowing the alert tool's accept, dismiss, and get_text actions to work as expected.
                 builder = builder.withCapabilities({ 'webSocketUrl': true, 'unhandledPromptBehavior': 'ignore' });
@@ -207,6 +211,35 @@ server.registerTool(
                     driver = await builder
                         .forBrowser('safari')
                         .setSafariOptions(safariOptions)
+                        .build();
+                    break;
+                }
+                case 'edge-ie': {
+                    // Microsoft Edge in Internet Explorer (IE) mode.
+                    // Windows only: driven by IEDriverServer (must be on PATH), which attaches
+                    // to Edge (Chromium) and renders pages with the legacy IE engine.
+                    if (process.platform !== 'win32') {
+                        warnings.push('Edge IE mode is only supported on Windows — IEDriverServer cannot launch on this OS.');
+                    }
+                    const ieOptions = new IeOptions();
+                    ieOptions.setEdgeChromium(true);
+                    ieOptions.setEdgePath(
+                        options.edgePath || 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
+                    );
+                    // IE mode needs the CreateProcess API to launch reliably under Edge.
+                    ieOptions.forceCreateProcessApi(true);
+                    if (options.ieIgnoreZoomSetting) {
+                        ieOptions.ignoreZoomSetting(true);
+                    }
+                    if (options.headless) {
+                        warnings.push('Edge IE mode does not support headless — launching with a visible window.');
+                    }
+                    if (options.arguments?.length) {
+                        options.arguments.forEach(arg => ieOptions.addArguments(arg));
+                    }
+                    driver = await builder
+                        .forBrowser('internet explorer')
+                        .setIeOptions(ieOptions)
                         .build();
                     break;
                 }

@@ -60,10 +60,22 @@ The agent will call Selenium's APIs to `start_browser`, `navigate`, and `take_sc
 
 ## Supported Browsers
 
-Chrome, Firefox, Edge, and Safari.
+Chrome, Firefox, Edge, Safari, and **Edge in IE mode** (`edge-ie`).
 
 > **Safari note:** Requires macOS. Run `sudo safaridriver --enable` once and enable
 > "Allow Remote Automation" in Safari → Settings → Developer. No headless mode.
+
+> **Edge IE mode note (`edge-ie`):** **Windows only.** Drives Microsoft Edge with the
+> legacy Internet Explorer engine for old intranet/legacy sites. Requirements:
+> 1. **IEDriverServer** (32-bit recommended) from the
+>    [Selenium downloads](https://www.selenium.dev/downloads/) on your `PATH`.
+> 2. Microsoft Edge installed.
+> 3. IE mode enabled in Edge (policy/registry) and the target sites configured to
+>    "Reload in Internet Explorer mode" / added to the Enterprise Mode site list.
+>
+> No headless mode. Optional `options`: `edgePath` (path to `msedge.exe`),
+> `ieIgnoreZoomSetting` (ignore protected-mode zone/zoom mismatch).
+> Example: `{ "browser": "edge-ie", "options": { "ieIgnoreZoomSetting": true } }`
 
 ---
 
@@ -75,8 +87,8 @@ Launches a browser session.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| browser | string | Yes | `chrome`, `firefox`, `edge`, or `safari` |
-| options | object | No | `{ headless: boolean, arguments: string[] }` |
+| browser | string | Yes | `chrome`, `firefox`, `edge`, `safari`, or `edge-ie` (Edge IE mode, Windows only) |
+| options | object | No | `{ headless: boolean, arguments: string[], edgePath?: string, ieIgnoreZoomSetting?: boolean }` |
 
 ### navigate
 Navigates to a URL.
