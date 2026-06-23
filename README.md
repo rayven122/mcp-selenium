@@ -87,7 +87,7 @@ about than full HTML or screenshots.
 | Firefox | `firefox` | Yes | Uses Firefox headless mode when requested. |
 | Edge | `edge` | Yes | Uses `--headless=new` when `options.headless` is true. |
 | Safari | `safari` | No | macOS only. Requires Safari remote automation. |
-| Edge in IE mode | `edge-ie` | No | Windows only. Requires IEDriverServer and IE mode setup. |
+| Edge in IE mode | `edge-ie` | No | Windows only. Only exposed in the `start_browser` schema on Windows. Requires IEDriverServer and IE mode setup. |
 
 ### Safari Setup
 
@@ -165,7 +165,8 @@ default is `10000` unless noted otherwise.
 
 #### `start_browser`
 
-`browser` must be one of `chrome`, `firefox`, `edge`, `safari`, or `edge-ie`.
+`browser` must be one of `chrome`, `firefox`, `edge`, or `safari`. On Windows,
+`edge-ie` is also available for Edge in Internet Explorer mode.
 
 `options` can include:
 
@@ -180,9 +181,24 @@ default is `10000` unless noted otherwise.
 
 `edgePath` and `ieIgnoreZoomSetting` apply only to `edge-ie`.
 
+For safety, browser arguments that weaken browser isolation or expose remote
+debugging are blocked by default. In a trusted local environment, set
+`MCP_SELENIUM_ALLOW_UNSAFE_BROWSER_ARGS=1` to pass those arguments through.
+
+#### `navigate`
+
+`javascript:` and `vbscript:` URLs are rejected. Use `execute_script` when you
+intentionally need to run JavaScript in the active page.
+
 #### `interact`
 
 `action` must be one of `click`, `doubleclick`, `rightclick`, or `hover`.
+
+#### `take_screenshot`
+
+When `outputPath` is provided, the path must end in `.png` and resolve inside
+the server's current working directory. Set `MCP_SELENIUM_SCREENSHOT_DIR` to use
+a different trusted screenshot output directory.
 
 #### `window`
 

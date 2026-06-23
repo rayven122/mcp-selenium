@@ -39,6 +39,13 @@ describe('Navigation & Element Locators', () => {
       assert.ok(text.includes('Navigated to'), `Expected navigation to succeed, got: ${text}`);
     });
 
+    it('should reject script URL navigation', async () => {
+      const result = await client.callTool('navigate', { url: 'javascript:alert(document.domain)' });
+      const text = getResponseText(result);
+      assert.strictEqual(result.isError, true, 'Expected isError: true for script URL');
+      assert.ok(text.includes('blocked'), `Expected blocked navigation message, got: ${text}`);
+    });
+
     it('should error on no active session', async () => {
       const freshClient = new McpClient();
       await freshClient.start();

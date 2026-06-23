@@ -5,6 +5,8 @@
 
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { McpClient, getResponseText, fixture } from './mcp-client.mjs';
 
 describe('Browser Management', () => {
@@ -33,6 +35,16 @@ describe('Browser Management', () => {
       const text = getResponseText(result);
       assert.ok(text.includes('Browser started'), `Expected "Browser started", got: ${text}`);
       assert.ok(text.includes('session_id:'), `Expected session_id in response, got: ${text}`);
+    });
+
+    it('should reject unsafe browser arguments before launch', async () => {
+      const result = await client.callTool('start_browser', {
+        browser: 'chrome',
+        options: { headless: true, arguments: ['--user-data-dir=/tmp/mcp-selenium-profile'] },
+      });
+      const text = getResponseText(result);
+      assert.strictEqual(result.isError, true, 'Expected isError: true for unsafe browser argument');
+      assert.ok(text.includes('blocked by default'), `Expected blocked argument message, got: ${text}`);
     });
   });
 
@@ -79,6 +91,26 @@ describe('Browser Management', () => {
       assert.ok(imageContent, 'Should contain an image content entry');
       assert.strictEqual(imageContent.mimeType, 'image/png', 'Image mimeType should be image/png');
       assert.ok(imageContent.data.length > 100, `Expected base64 data, got ${imageContent.data.length} chars`);
+    });
+
+    it('should save screenshots only inside the working directory', async () => {
+      const outputPath = path.join(process.cwd(), 'test-output-screenshot.png');
+      try {
+        const result = await client.callTool('take_screenshot', { outputPath });
+        const text = getResponseText(result);
+        assert.ok(text.includes(outputPath), `Expected saved path in response, got: ${text}`);
+        const stat = await fs.stat(outputPath);
+        assert.ok(stat.size > 100, `Expected screenshot file to contain data, got ${stat.size} bytes`);
+      } finally {
+        await fs.rm(outputPath, { force: true });
+      }
+    });
+
+    it('should reject screenshot paths outside the working directory', async () => {
+      const result = await client.callTool('take_screenshot', { outputPath: '/tmp/mcp-selenium-outside.png' });
+      const text = getResponseText(result);
+      assert.strictEqual(result.isError, true, 'Expected isError: true for outside outputPath');
+      assert.ok(text.includes('inside'), `Expected directory restriction message, got: ${text}`);
     });
   });
 

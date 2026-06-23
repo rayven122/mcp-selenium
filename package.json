@@ -12,7 +12,7 @@
     "url": "git+https://github.com/rayven122/mcp-selenium.git"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test --test-concurrency=1"
   },
   "keywords": [],
   "author": "",

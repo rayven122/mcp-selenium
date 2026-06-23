@@ -75,6 +75,19 @@ describe('MCP Server', () => {
     }
   });
 
+  it('should expose edge-ie only on Windows', async () => {
+    const tools = await client.listTools();
+    const startBrowser = tools.find((tool) => tool.name === 'start_browser');
+    assert.ok(startBrowser, 'start_browser tool should exist');
+
+    const browserEnum = startBrowser.inputSchema.properties.browser.enum;
+    if (process.platform === 'win32') {
+      assert.ok(browserEnum.includes('edge-ie'), `Expected edge-ie on Windows, got: ${JSON.stringify(browserEnum)}`);
+    } else {
+      assert.ok(!browserEnum.includes('edge-ie'), `Did not expect edge-ie on ${process.platform}, got: ${JSON.stringify(browserEnum)}`);
+    }
+  });
+
   it('should register all expected resources', async () => {
     const resources = await client.listResources();
     const uris = resources.map((r) => r.uri);
