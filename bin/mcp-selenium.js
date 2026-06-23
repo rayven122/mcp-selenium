@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
-import { spawn } from 'child_process';
+import { spawn } from 'node:child_process';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -11,7 +11,7 @@ const serverPath = resolve(__dirname, '../src/lib/server.js');
 
 // Start the server
 const child = spawn('node', [serverPath], {
-    stdio: 'inherit'
+    stdio: 'inherit',
 });
 
 child.on('error', (error) => {

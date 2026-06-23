@@ -3,157 +3,211 @@
  * Verifies each locator strategy finds the correct element by checking its text.
  */
 
-import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { McpClient, getResponseText, fixture } from './mcp-client.mjs';
+import { after, before, describe, it } from 'node:test';
+import { fixture, getResponseText, McpClient } from './mcp-client.mjs';
 
 describe('Navigation & Element Locators', () => {
-  let client;
+    let client;
 
-  before(async () => {
-    client = new McpClient();
-    await client.start();
-    await client.callTool('start_browser', {
-      browser: 'chrome',
-      options: { headless: true, arguments: ['--no-sandbox', '--disable-dev-shm-usage'] },
-    });
-  });
-
-  after(async () => {
-    try { await client.callTool('close_session'); } catch { /* ignore */ }
-    await client.stop();
-  });
-
-  describe('navigate', () => {
-    it('should navigate to a URL', async () => {
-      const result = await client.callTool('navigate', { url: fixture('locators.html') });
-      const text = getResponseText(result);
-      assert.ok(text.includes('Navigated to'), `Expected "Navigated to", got: ${text}`);
-    });
-
-    it('should navigate to invalid URL without throwing', async () => {
-      // Chrome accepts any URL and shows an error page — the navigation
-      // itself succeeds. This verifies the tool doesn't crash on bad URLs.
-      const result = await client.callTool('navigate', { url: 'not-a-real-protocol://bogus' });
-      const text = getResponseText(result);
-      assert.ok(text.includes('Navigated to'), `Expected navigation to succeed, got: ${text}`);
-    });
-
-    it('should reject script URL navigation', async () => {
-      const result = await client.callTool('navigate', { url: 'javascript:alert(document.domain)' });
-      const text = getResponseText(result);
-      assert.strictEqual(result.isError, true, 'Expected isError: true for script URL');
-      assert.ok(text.includes('blocked'), `Expected blocked navigation message, got: ${text}`);
-    });
-
-    it('should error on no active session', async () => {
-      const freshClient = new McpClient();
-      await freshClient.start();
-      try {
-        const result = await freshClient.callTool('navigate', { url: 'https://example.com' });
-        assert.strictEqual(result.isError, true, 'Expected isError: true on error response');
-        const text = getResponseText(result);
-        assert.ok(
-          text.includes('Error') || text.includes('No active'),
-          `Expected error, got: ${text}`
-        );
-      } finally {
-        await freshClient.stop();
-      }
-    });
-  });
-
-  describe('locator strategies', () => {
     before(async () => {
-      await client.callTool('navigate', { url: fixture('locators.html') });
+        client = new McpClient();
+        await client.start();
+        await client.callTool('start_browser', {
+            browser: 'chrome',
+            options: { headless: true, arguments: ['--no-sandbox', '--disable-dev-shm-usage'] },
+        });
     });
 
-    it('should find element by id and verify text', async () => {
-      const result = await client.callTool('get_element_text', { by: 'id', value: 'title' });
-      const text = getResponseText(result);
-      assert.equal(text, 'Heading One');
+    after(async () => {
+        try {
+            await client.callTool('close_session');
+        } catch {
+            /* ignore */
+        }
+        await client.stop();
     });
 
-    it('should find element by css and verify text', async () => {
-      const result = await client.callTool('get_element_text', { by: 'css', value: '.heading' });
-      const text = getResponseText(result);
-      assert.equal(text, 'Heading One');
+    describe('navigate', () => {
+        it('should navigate to a URL', async () => {
+            const result = await client.callTool('navigate', { url: fixture('locators.html') });
+            const text = getResponseText(result);
+            assert.ok(text.includes('Navigated to'), `Expected "Navigated to", got: ${text}`);
+        });
+
+        it('should navigate to invalid URL without throwing', async () => {
+            // Chrome accepts any URL and shows an error page — the navigation
+            // itself succeeds. This verifies the tool doesn't crash on bad URLs.
+            const result = await client.callTool('navigate', {
+                url: 'not-a-real-protocol://bogus',
+            });
+            const text = getResponseText(result);
+            assert.ok(
+                text.includes('Navigated to'),
+                `Expected navigation to succeed, got: ${text}`
+            );
+        });
+
+        it('should reject script URL navigation', async () => {
+            const result = await client.callTool('navigate', {
+                url: 'javascript:alert(document.domain)',
+            });
+            const text = getResponseText(result);
+            assert.strictEqual(result.isError, true, 'Expected isError: true for script URL');
+            assert.ok(
+                text.includes('blocked'),
+                `Expected blocked navigation message, got: ${text}`
+            );
+        });
+
+        it('should error on no active session', async () => {
+            const freshClient = new McpClient();
+            await freshClient.start();
+            try {
+                const result = await freshClient.callTool('navigate', {
+                    url: 'https://example.com',
+                });
+                assert.strictEqual(
+                    result.isError,
+                    true,
+                    'Expected isError: true on error response'
+                );
+                const text = getResponseText(result);
+                assert.ok(
+                    text.includes('Error') || text.includes('No active'),
+                    `Expected error, got: ${text}`
+                );
+            } finally {
+                await freshClient.stop();
+            }
+        });
     });
 
-    it('should find element by xpath and verify text', async () => {
-      const result = await client.callTool('get_element_text', { by: 'xpath', value: '//button' });
-      const text = getResponseText(result);
-      assert.equal(text, 'Click Me');
+    describe('locator strategies', () => {
+        before(async () => {
+            await client.callTool('navigate', { url: fixture('locators.html') });
+        });
+
+        it('should find element by id and verify text', async () => {
+            const result = await client.callTool('get_element_text', { by: 'id', value: 'title' });
+            const text = getResponseText(result);
+            assert.equal(text, 'Heading One');
+        });
+
+        it('should find element by css and verify text', async () => {
+            const result = await client.callTool('get_element_text', {
+                by: 'css',
+                value: '.heading',
+            });
+            const text = getResponseText(result);
+            assert.equal(text, 'Heading One');
+        });
+
+        it('should find element by xpath and verify text', async () => {
+            const result = await client.callTool('get_element_text', {
+                by: 'xpath',
+                value: '//button',
+            });
+            const text = getResponseText(result);
+            assert.equal(text, 'Click Me');
+        });
+
+        it('should find element by name and verify text', async () => {
+            const result = await client.callTool('get_element_text', {
+                by: 'name',
+                value: 'intro-text',
+            });
+            const text = getResponseText(result);
+            assert.equal(text, 'Intro paragraph');
+        });
+
+        it('should find element by class and verify text', async () => {
+            const result = await client.callTool('get_element_text', {
+                by: 'class',
+                value: 'content',
+            });
+            const text = getResponseText(result);
+            assert.equal(text, 'Second paragraph');
+        });
+
+        it('should find nested element by css and verify text', async () => {
+            const result = await client.callTool('get_element_text', {
+                by: 'css',
+                value: '#nested .inner',
+            });
+            const text = getResponseText(result);
+            assert.equal(text, 'Nested element');
+        });
     });
 
-    it('should find element by name and verify text', async () => {
-      const result = await client.callTool('get_element_text', { by: 'name', value: 'intro-text' });
-      const text = getResponseText(result);
-      assert.equal(text, 'Intro paragraph');
+    describe('tag locator (By.tagName)', () => {
+        before(async () => {
+            await client.callTool('navigate', { url: fixture('locators.html') });
+        });
+
+        it('should find h1 by tag and verify text', async () => {
+            const result = await client.callTool('get_element_text', { by: 'tag', value: 'h1' });
+            const text = getResponseText(result);
+            assert.equal(text, 'Heading One');
+        });
+
+        it('should find button by tag and verify text', async () => {
+            const result = await client.callTool('get_element_text', {
+                by: 'tag',
+                value: 'button',
+            });
+            const text = getResponseText(result);
+            assert.equal(text, 'Click Me');
+        });
+
+        it('should find anchor by tag and verify text', async () => {
+            const result = await client.callTool('get_element_text', { by: 'tag', value: 'a' });
+            const text = getResponseText(result);
+            assert.equal(text, 'Test Link');
+        });
+
+        it('should find input by tag without error', async () => {
+            // Inputs have no text content, but the locator should still work
+            const result = await client.callTool('get_element_attribute', {
+                by: 'tag',
+                value: 'input',
+                attribute: 'type',
+            });
+            const text = getResponseText(result);
+            assert.ok(!text.includes('Error'), `Expected success, got: ${text}`);
+        });
     });
 
-    it('should find element by class and verify text', async () => {
-      const result = await client.callTool('get_element_text', { by: 'class', value: 'content' });
-      const text = getResponseText(result);
-      assert.equal(text, 'Second paragraph');
-    });
+    describe('locator error cases', () => {
+        before(async () => {
+            await client.callTool('navigate', { url: fixture('locators.html') });
+        });
 
-    it('should find nested element by css and verify text', async () => {
-      const result = await client.callTool('get_element_text', { by: 'css', value: '#nested .inner' });
-      const text = getResponseText(result);
-      assert.equal(text, 'Nested element');
-    });
-  });
+        it('should reject unsupported locator strategy via schema validation', async () => {
+            const result = await client.callTool('get_element_text', {
+                by: 'invalid',
+                value: 'test',
+            });
+            assert.strictEqual(
+                result.isError,
+                true,
+                'Expected isError: true for invalid enum value'
+            );
+            const text = getResponseText(result);
+            assert.ok(
+                text.includes('invalid') || text.includes('Invalid'),
+                `Expected validation error, got: ${text}`
+            );
+        });
 
-  describe('tag locator (By.tagName)', () => {
-    before(async () => {
-      await client.callTool('navigate', { url: fixture('locators.html') });
+        it('should error when element not found', async () => {
+            const result = await client.callTool('get_element_text', {
+                by: 'id',
+                value: 'nonexistent',
+            });
+            assert.strictEqual(result.isError, true, 'Expected isError: true on error response');
+            const text = getResponseText(result);
+            assert.ok(text.includes('Error'), `Expected error, got: ${text}`);
+        });
     });
-
-    it('should find h1 by tag and verify text', async () => {
-      const result = await client.callTool('get_element_text', { by: 'tag', value: 'h1' });
-      const text = getResponseText(result);
-      assert.equal(text, 'Heading One');
-    });
-
-    it('should find button by tag and verify text', async () => {
-      const result = await client.callTool('get_element_text', { by: 'tag', value: 'button' });
-      const text = getResponseText(result);
-      assert.equal(text, 'Click Me');
-    });
-
-    it('should find anchor by tag and verify text', async () => {
-      const result = await client.callTool('get_element_text', { by: 'tag', value: 'a' });
-      const text = getResponseText(result);
-      assert.equal(text, 'Test Link');
-    });
-
-    it('should find input by tag without error', async () => {
-      // Inputs have no text content, but the locator should still work
-      const result = await client.callTool('get_element_attribute', { by: 'tag', value: 'input', attribute: 'type' });
-      const text = getResponseText(result);
-      assert.ok(!text.includes('Error'), `Expected success, got: ${text}`);
-    });
-  });
-
-  describe('locator error cases', () => {
-    before(async () => {
-      await client.callTool('navigate', { url: fixture('locators.html') });
-    });
-
-    it('should reject unsupported locator strategy via schema validation', async () => {
-      const result = await client.callTool('get_element_text', { by: 'invalid', value: 'test' });
-      assert.strictEqual(result.isError, true, 'Expected isError: true for invalid enum value');
-      const text = getResponseText(result);
-      assert.ok(text.includes('invalid') || text.includes('Invalid'),
-        `Expected validation error, got: ${text}`);
-    });
-
-    it('should error when element not found', async () => {
-      const result = await client.callTool('get_element_text', { by: 'id', value: 'nonexistent' });
-      assert.strictEqual(result.isError, true, 'Expected isError: true on error response');
-      const text = getResponseText(result);
-      assert.ok(text.includes('Error'), `Expected error, got: ${text}`);
-    });
-  });
 });
