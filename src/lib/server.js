@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { readFileSync } from 'fs';
+import { isAbsolute, relative, resolve, sep } from 'path';
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { McpError, ErrorCode } from "@modelcontextprotocol/sdk/types.js";
@@ -63,6 +64,69 @@ const getLocator = (by, value) => {
     }
 };
 
+const unsafeBrowserArgumentNames = new Set([
+    '--allow-file-access-from-files',
+    '--allow-running-insecure-content',
+    '--disable-web-security',
+    '--disable-site-isolation-trials',
+    '--disable-features',
+    '--disable-extensions-except',
+    '--load-extension',
+    '--remote-allow-origins',
+    '--remote-debugging-address',
+    '--remote-debugging-port',
+    '--remote-debugging-pipe',
+    '--unsafely-treat-insecure-origin-as-secure',
+    '--user-data-dir'
+]);
+
+const allowUnsafeBrowserArgs = () => process.env.MCP_SELENIUM_ALLOW_UNSAFE_BROWSER_ARGS === '1';
+
+const browserArgName = (arg) => arg.split('=')[0].toLowerCase();
+
+const validateBrowserArguments = (args = []) => {
+    if (allowUnsafeBrowserArgs()) return;
+
+    for (const arg of args) {
+        if (arg.includes('\0')) {
+            throw new Error('Browser arguments must not contain NUL bytes');
+        }
+        const name = browserArgName(arg);
+        if (unsafeBrowserArgumentNames.has(name)) {
+            throw new Error(`Browser argument "${name}" is blocked by default. Set MCP_SELENIUM_ALLOW_UNSAFE_BROWSER_ARGS=1 to allow it in a trusted environment.`);
+        }
+    }
+};
+
+const validateNavigationUrl = (url) => {
+    const schemeMatch = url.trim().match(/^([a-z][a-z0-9+.-]*):/i);
+    const scheme = schemeMatch?.[1]?.toLowerCase();
+    if (scheme === 'javascript' || scheme === 'vbscript') {
+        throw new Error(`Navigation to ${scheme}: URLs is blocked; use execute_script for explicit JavaScript execution.`);
+    }
+};
+
+const screenshotRoot = () => resolve(process.env.MCP_SELENIUM_SCREENSHOT_DIR || process.cwd());
+
+const resolveScreenshotOutputPath = (outputPath) => {
+    if (outputPath.includes('\0')) {
+        throw new Error('Screenshot outputPath must not contain NUL bytes');
+    }
+    if (!outputPath.toLowerCase().endsWith('.png')) {
+        throw new Error('Screenshot outputPath must end with .png');
+    }
+
+    const root = screenshotRoot();
+    const resolvedPath = isAbsolute(outputPath)
+        ? resolve(outputPath)
+        : resolve(root, outputPath);
+    const relativePath = relative(root, resolvedPath);
+    if (relativePath === '..' || relativePath.startsWith(`..${sep}`) || isAbsolute(relativePath)) {
+        throw new Error(`Screenshot outputPath must be inside ${root}`);
+    }
+    return resolvedPath;
+};
+
 // BiDi helpers
 const newBidiState = () => ({
     available: false,
@@ -120,6 +184,10 @@ const accessibilitySnapshotScript = readFileSync(
 );
 
 // Common schemas
+const supportedBrowsers = process.platform === 'win32'
+    ? ["chrome", "firefox", "edge", "safari", "edge-ie"]
+    : ["chrome", "firefox", "edge", "safari"];
+
 const browserOptionsSchema = z.object({
     headless: z.boolean().optional().describe("Run browser in headless mode"),
     arguments: z.array(z.string()).optional().describe("Additional browser arguments"),
@@ -139,12 +207,14 @@ server.registerTool(
     {
         description: "launches browser",
         inputSchema: {
-            browser: z.enum(["chrome", "firefox", "edge", "safari", "edge-ie"]).describe("Browser to launch. Use 'edge-ie' to drive Microsoft Edge in Internet Explorer (IE) mode — Windows only, requires IEDriverServer on PATH."),
+            browser: z.enum(supportedBrowsers).describe("Browser to launch. On Windows, 'edge-ie' drives Microsoft Edge in Internet Explorer (IE) mode and requires IEDriverServer on PATH."),
             options: browserOptionsSchema
         }
     },
     async ({ browser, options = {} }) => {
         try {
+            validateBrowserArguments(options.arguments);
+
             let builder = new Builder();
             let driver;
             let warnings = [];
@@ -219,7 +289,7 @@ server.registerTool(
                     // Windows only: driven by IEDriverServer (must be on PATH), which attaches
                     // to Edge (Chromium) and renders pages with the legacy IE engine.
                     if (process.platform !== 'win32') {
-                        warnings.push('Edge IE mode is only supported on Windows — IEDriverServer cannot launch on this OS.');
+                        throw new Error('Edge IE mode is only supported on Windows.');
                     }
                     const ieOptions = new IeOptions();
                     ieOptions.setEdgeChromium(true);
@@ -290,6 +360,7 @@ server.registerTool(
     },
     async ({ url }) => {
         try {
+            validateNavigationUrl(url);
             const driver = getDriver();
             await driver.get(url);
             return {
@@ -479,10 +550,11 @@ server.registerTool(
             const driver = getDriver();
             const screenshot = await driver.takeScreenshot();
             if (outputPath) {
+                const resolvedOutputPath = resolveScreenshotOutputPath(outputPath);
                 const fs = await import('fs');
-                await fs.promises.writeFile(outputPath, screenshot, 'base64');
+                await fs.promises.writeFile(resolvedOutputPath, screenshot, 'base64');
                 return {
-                    content: [{ type: 'text', text: `Screenshot saved to ${outputPath}` }]
+                    content: [{ type: 'text', text: `Screenshot saved to ${resolvedOutputPath}` }]
                 };
             } else {
                 return {
