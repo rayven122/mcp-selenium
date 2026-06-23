@@ -15,7 +15,7 @@ A Model Context Protocol (MCP) server for Selenium WebDriver — browser automat
 
 Paste into your browser address bar:
 ```
-goose://extension?cmd=npx&arg=-y&arg=%40angiejones%2Fmcp-selenium%40latest&id=selenium-mcp&name=Selenium%20MCP&description=automates%20browser%20interactions
+goose://extension?cmd=npx&arg=-y&arg=github%3Arayven122%2Fmcp-selenium&id=selenium-mcp&name=Selenium%20MCP&description=automates%20browser%20interactions
 ```
 </details>
 
@@ -23,7 +23,7 @@ goose://extension?cmd=npx&arg=-y&arg=%40angiejones%2Fmcp-selenium%40latest&id=se
 <summary><strong>Goose (CLI)</strong></summary>
 
 ```bash
-goose session --with-extension "npx -y @angiejones/mcp-selenium@latest"
+goose session --with-extension "npx -y github:rayven122/mcp-selenium"
 ```
 </details>
 
@@ -31,7 +31,7 @@ goose session --with-extension "npx -y @angiejones/mcp-selenium@latest"
 <summary><strong>Claude Code</strong></summary>
 
 ```bash
-claude mcp add selenium -- npx -y @angiejones/mcp-selenium@latest
+claude mcp add selenium -- npx -y github:rayven122/mcp-selenium
 ```
 </details>
 
@@ -43,7 +43,7 @@ claude mcp add selenium -- npx -y @angiejones/mcp-selenium@latest
   "mcpServers": {
     "selenium": {
       "command": "npx",
-      "args": ["-y", "@angiejones/mcp-selenium@latest"]
+      "args": ["-y", "github:rayven122/mcp-selenium"]
     }
   }
 }
@@ -267,7 +267,7 @@ Returns an accessibility tree snapshot of the current page — a compact, struct
 ### Setup
 
 ```bash
-git clone https://github.com/angiejones/mcp-selenium.git
+git clone https://github.com/rayven122/mcp-selenium.git
 cd mcp-selenium
 npm install
 ```
@@ -280,17 +280,24 @@ npm test
 
 Requires Chrome + chromedriver on PATH. Tests run headless.
 
-### Install via Smithery
+### Run directly from GitHub (no install)
+
+This fork is distributed via GitHub (not published to npm). Run it directly:
 
 ```bash
-npx -y @smithery/cli install @angiejones/mcp-selenium --client claude
+npx -y github:rayven122/mcp-selenium
 ```
 
-### Install globally
+### Run from a local clone
+
+For a pinned local copy (recommended when running on a fixed Windows host for Edge IE mode):
 
 ```bash
-npm install -g @angiejones/mcp-selenium
-mcp-selenium
+git clone https://github.com/rayven122/mcp-selenium.git
+cd mcp-selenium
+npm install
+# point your MCP client at:
+node /absolute/path/to/mcp-selenium/src/lib/server.js
 ```
 
 </details>
