@@ -11,6 +11,8 @@ on:
 
 permissions:
   contents: read
+  issues: write
+  pull-requests: write
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -105,6 +107,65 @@ jobs:
         run: npm ci
 
       - name: Run test coverage
-        run: npm run coverage
+        run: |
+          set -o pipefail
+          npm run coverage 2>&1 | tee coverage.out
         env:
           CHROME_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
+
+      - name: Summarize coverage
+        run: |
+          coverage_line="$(grep '# all files' coverage.out | tail -n 1)"
+          line_coverage="$(echo "$coverage_line" | awk -F'|' '{ gsub(/ /, "", $2); print $2 }')"
+          branch_coverage="$(echo "$coverage_line" | awk -F'|' '{ gsub(/ /, "", $3); print $3 }')"
+          function_coverage="$(echo "$coverage_line" | awk -F'|' '{ gsub(/ /, "", $4); print $4 }')"
+
+          {
+            echo "line_coverage=$line_coverage"
+            echo "branch_coverage=$branch_coverage"
+            echo "function_coverage=$function_coverage"
+          } >> "$GITHUB_ENV"
+
+          {
+            echo "## Coverage"
+            echo ""
+            echo "| Metric | Coverage |"
+            echo "| --- | ---: |"
+            echo "| Lines | ${line_coverage}% |"
+            echo "| Branches | ${branch_coverage}% |"
+            echo "| Functions | ${function_coverage}% |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment coverage on pull request
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          marker='<!-- coverage-report -->'
+          body_file="$(mktemp)"
+          cat > "$body_file" <<EOF
+          $marker
+          ## Coverage
+
+          | Metric | Coverage |
+          | --- | ---: |
+          | Lines | ${line_coverage}% |
+          | Branches | ${branch_coverage}% |
+          | Functions | ${function_coverage}% |
+          EOF
+
+          comment_id="$(
+            gh api "repos/$REPO/issues/$PR_NUMBER/comments" \
+              --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | contains(\"$marker\"))) | .id" \
+              | tail -n 1
+          )"
+
+          if [ -n "$comment_id" ]; then
+            gh api "repos/$REPO/issues/comments/$comment_id" \
+              --method PATCH \
+              --field body="$(cat "$body_file")"
+          else
+            gh pr comment "$PR_NUMBER" --body-file "$body_file"
+          fi
