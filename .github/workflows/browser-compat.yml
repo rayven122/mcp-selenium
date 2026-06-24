@@ -1,0 +1,52 @@
+name: Browser Compatibility
+
+on:
+  schedule:
+    - cron: '25 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: browser-compat-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [firefox, edge]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Firefox
+        if: matrix.browser == 'firefox'
+        uses: browser-actions/setup-firefox@v1
+        with:
+          firefox-version: latest
+
+      - name: Install Edge
+        if: matrix.browser == 'edge'
+        uses: browser-actions/setup-edge@v1
+        with:
+          edge-version: stable
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run browser smoke test
+        run: node --test test/browser-compat.test.mjs
+        env:
+          MCP_SELENIUM_TEST_BROWSER: ${{ matrix.browser }}

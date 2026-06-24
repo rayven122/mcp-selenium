@@ -1,24 +1,35 @@
 {
-  "name": "@rayven122/mcp-selenium",
-  "version": "0.2.3",
-  "description": "Selenium WebDriver MCP Server (rayven122 fork — adds Edge IE mode)",
-  "type": "module",
-  "main": "src/lib/server.js",
-  "bin": {
-    "mcp-selenium": "./src/lib/server.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/rayven122/mcp-selenium.git"
-  },
-  "scripts": {
-    "test": "node --test --test-concurrency=1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.26.0",
-    "selenium-webdriver": "^4.18.1"
-  }
+    "name": "@rayven122/mcp-selenium",
+    "version": "0.2.3",
+    "description": "Selenium WebDriver MCP Server (rayven122 fork — adds Edge IE mode)",
+    "type": "module",
+    "main": "src/lib/server.js",
+    "bin": {
+        "mcp-selenium": "./src/lib/server.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/rayven122/mcp-selenium.git"
+    },
+    "scripts": {
+        "audit": "npm audit --audit-level=high",
+        "check": "biome check .",
+        "ci": "npm run check && npm run audit && npm test && npm run pack:dry-run",
+        "coverage": "node --test --test-concurrency=1 --experimental-test-coverage --test-coverage-include='src/**/*.js'",
+        "format": "biome format --write .",
+        "format:check": "biome format .",
+        "lint": "biome lint .",
+        "pack:dry-run": "npm pack --dry-run",
+        "test": "node --test --test-concurrency=1"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "^1.26.0",
+        "selenium-webdriver": "^4.18.1"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "2.5.1"
+    }
 }
