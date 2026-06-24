@@ -5,11 +5,24 @@
     "type": "module",
     "main": "src/lib/server.js",
     "bin": {
-        "mcp-selenium": "./src/lib/server.js"
+        "mcp-selenium": "./bin/mcp-selenium.js"
+    },
+    "files": [
+        "bin",
+        "src",
+        "README.md",
+        "LICENSE",
+        "smithery.yaml"
+    ],
+    "engines": {
+        "node": ">=18"
     },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/rayven122/mcp-selenium.git"
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "scripts": {
         "audit": "npm audit --audit-level=high",
