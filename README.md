@@ -182,65 +182,6 @@ default is `10000` unless noted otherwise.
 | `delete_cookie` | Delete all cookies or one cookie by name. | optional `name` |
 | `diagnostics` | Read BiDi console logs, JS errors, or network activity. | `type`, optional `clear` |
 
-### Tool Details
-
-#### `start_browser`
-
-`browser` must be one of `chrome`, `firefox`, `edge`, or `safari`. On Windows,
-`edge-ie` is also available for Edge in Internet Explorer mode.
-
-`options` can include:
-
-```json
-{
-  "headless": true,
-  "arguments": ["--window-size=1280,720"],
-  "edgePath": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
-  "ieIgnoreZoomSetting": true
-}
-```
-
-`edgePath` and `ieIgnoreZoomSetting` apply only to `edge-ie`.
-
-For safety, browser arguments that weaken browser isolation or expose remote
-debugging are blocked by default. In a trusted local environment, set
-`MCP_SELENIUM_ALLOW_UNSAFE_BROWSER_ARGS=1` to pass those arguments through.
-
-#### `navigate`
-
-`javascript:` and `vbscript:` URLs are rejected. Use `execute_script` when you
-intentionally need to run JavaScript in the active page.
-
-#### `interact`
-
-`action` must be one of `click`, `doubleclick`, `rightclick`, or `hover`.
-
-#### `take_screenshot`
-
-When `outputPath` is provided, the path must end in `.png` and resolve inside
-the server's current working directory. Set `MCP_SELENIUM_SCREENSHOT_DIR` to use
-a different trusted screenshot output directory.
-
-#### `window`
-
-`action` must be one of `list`, `switch`, `switch_latest`, or `close`.
-`handle` is required for `switch`.
-
-#### `frame`
-
-`action` must be `switch` or `default`. For `switch`, provide either a locator
-(`by` and `value`) or an `index`.
-
-#### `alert`
-
-`action` must be one of `accept`, `dismiss`, `get_text`, or `send_text`.
-`text` is required for `send_text`. The default timeout is `5000` ms.
-
-#### `diagnostics`
-
-`type` must be one of `console`, `errors`, or `network`. Set `clear` to `true`
-to empty that diagnostics buffer after reading it.
-
 ## Resources
 
 MCP resources provide read-only data that clients can access without calling a
