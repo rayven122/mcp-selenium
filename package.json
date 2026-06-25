@@ -1,6 +1,6 @@
 {
     "name": "@rayven122/mcp-selenium",
-    "version": "0.2.3",
+    "version": "0.2.5",
     "description": "Selenium WebDriver MCP Server (rayven122 fork — adds Edge IE mode)",
     "type": "module",
     "main": "src/lib/server.js",
