@@ -5,7 +5,7 @@
     "type": "module",
     "main": "src/lib/server.js",
     "bin": {
-        "mcp-selenium": "./bin/mcp-selenium.js"
+        "mcp-selenium": "bin/mcp-selenium.js"
     },
     "files": [
         "bin",
