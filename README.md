@@ -87,13 +87,15 @@ claude mcp add selenium -- npx -y @rayven122/mcp-selenium
 - The matching browser driver available to Selenium if your environment does
   not provide one automatically.
 
-For local tests, Chrome and `chromedriver` must be on your `PATH`.
-
-## Example Usage
+## Example Prompts
 
 After adding the server to your MCP client, ask your AI agent something like:
 
-> Open Chrome, go to github.com/angiejones, and take a screenshot.
+> Open Chrome, go to example.com, and take a screenshot.
+
+> Open Firefox, navigate to this signup page, fill the form, and submit it.
+
+> Inspect the current page and summarize the interactive elements.
 
 The agent can then call `start_browser`, `navigate`, and `take_screenshot`
 through MCP. For most page inspection tasks, agents should prefer the
@@ -110,7 +112,8 @@ about than full HTML or screenshots.
 | Safari | `safari` | No | macOS only. Requires Safari remote automation. |
 | Edge in IE mode | `edge-ie` | No | Windows only. Only exposed in the `start_browser` schema on Windows. Requires IEDriverServer and IE mode setup. |
 
-### Safari Setup
+<details>
+<summary><strong>Safari setup</strong></summary>
 
 Run this once on macOS:
 
@@ -120,7 +123,10 @@ sudo safaridriver --enable
 
 Then enable "Allow Remote Automation" in Safari under Settings > Developer.
 
-### Edge IE Mode Setup
+</details>
+
+<details>
+<summary><strong>Edge IE mode setup</strong></summary>
 
 Edge IE mode is for legacy sites that must run through the Internet Explorer
 engine inside Microsoft Edge. It requires:
@@ -144,6 +150,8 @@ Example:
 ```
 
 Optional Edge IE mode options include `edgePath` and `ieIgnoreZoomSetting`.
+
+</details>
 
 ## Tools
 
