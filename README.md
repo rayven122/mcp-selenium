@@ -1,7 +1,6 @@
 # MCP Selenium Server
 
-[![npm version](https://img.shields.io/npm/v/@rayven122/mcp-selenium)](https://www.npmjs.com/package/@rayven122/mcp-selenium)
-[![npm downloads](https://img.shields.io/npm/dm/@rayven122/mcp-selenium)](https://www.npmjs.com/package/@rayven122/mcp-selenium)
+[![npm version](https://img.shields.io/npm/v/%40rayven122%2Fmcp-selenium)](https://www.npmjs.com/package/@rayven122/mcp-selenium)
 [![License](https://img.shields.io/github/license/rayven122/mcp-selenium)](LICENSE)
 
 A Model Context Protocol (MCP) server for browser automation with Selenium
