@@ -44,7 +44,7 @@ server.
 Paste into your browser address bar:
 
 ```
-goose://extension?cmd=npx&arg=-y&arg=%40rayven122%2Fmcp-selenium&id=selenium-mcp&name=Selenium%20MCP&description=automates%20browser%20interactions
+goose://extension?cmd=npx&arg=-y&arg=%40rayven122%2Fmcp-selenium&timeout=300&id=selenium-mcp&name=Selenium%20MCP&description=automates%20browser%20interactions
 ```
 </details>
 
